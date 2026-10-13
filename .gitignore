@@ -1,0 +1,16 @@
+.godot/
+.env
+.env.*
+config/local.cfg
+export_credentials.cfg
+builds/
+android/build/
+*.log
+*.keystore
+*.jks
+*.key
+*.pem
+*.p12
+*.pfx
+*.mobileprovision
+.DS_Store

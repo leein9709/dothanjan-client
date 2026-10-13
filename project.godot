@@ -1,0 +1,34 @@
+; 도트한잔 — Godot 4.7.2, GDScript, Compatibility
+config_version=5
+
+[application]
+config/name="도트한잔"
+config/version="0.1.0"
+run/main_scene="res://scenes/login.tscn"
+config/features=PackedStringArray("4.7", "GL Compatibility")
+config/icon="res://assets/branding/app-symbol.png"
+boot_splash/image="res://assets/branding/app-symbol.png"
+boot_splash/bg_color=Color(0.07, 0.12, 0.09, 1)
+boot_splash/fullsize=false
+boot_splash/use_filter=false
+
+[autoload]
+AppConfig="*res://scripts/app_config.gd"
+SocialAuth="*res://scripts/social_auth.gd"
+
+[display]
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/size/window_width_override=1280
+window/size/window_height_override=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+window/handheld/orientation=0
+
+[rendering]
+textures/vram_compression/import_etc2_astc=true
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/default_filters/use_nearest_mipmap_filter=false
+textures/canvas_textures/default_texture_filter=0
+environment/defaults/default_clear_color=Color(0.07, 0.12, 0.09, 1)

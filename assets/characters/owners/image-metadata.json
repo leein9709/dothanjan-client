@@ -1,0 +1,164 @@
+[
+  {
+    "file": "cat-black-idle.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "mode": "RGBA",
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "bbox": [
+      27,
+      51,
+      1218,
+      1238
+    ]
+  },
+  {
+    "file": "cat-ginger-idle.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "mode": "RGBA",
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "bbox": [
+      59,
+      33,
+      1234,
+      1236
+    ]
+  },
+  {
+    "file": "cat-white-gray-idle.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "mode": "RGBA",
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "bbox": [
+      0,
+      23,
+      1232,
+      1230
+    ]
+  },
+  {
+    "file": "fox-orange-idle.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "mode": "RGBA",
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "bbox": [
+      25,
+      36,
+      1240,
+      1254
+    ]
+  },
+  {
+    "file": "fox-white-idle.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "mode": "RGBA",
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "bbox": [
+      25,
+      39,
+      1235,
+      1226
+    ]
+  },
+  {
+    "file": "human-female-idle.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "mode": "RGBA",
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "bbox": [
+      33,
+      29,
+      1240,
+      1254
+    ]
+  },
+  {
+    "file": "human-male-idle.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "mode": "RGBA",
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "bbox": [
+      23,
+      25,
+      1222,
+      1254
+    ]
+  },
+  {
+    "file": "rabbit-light-brown-idle.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "mode": "RGBA",
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "bbox": [
+      53,
+      71,
+      1226,
+      1235
+    ]
+  },
+  {
+    "file": "rabbit-white-idle.png",
+    "size": [
+      1254,
+      1254
+    ],
+    "mode": "RGBA",
+    "alpha_extrema": [
+      0,
+      255
+    ],
+    "bbox": [
+      25,
+      25,
+      1182,
+      1254
+    ]
+  }
+]
