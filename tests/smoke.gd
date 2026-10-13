@@ -20,20 +20,22 @@ func _run() -> void:
 	check(login.find_child("KakaoLogin", true, false) != null, "Missing Kakao button")
 	check(login.find_child("NaverLogin", true, false) != null, "Missing Naver button")
 	check((login.find_child("AppleLogin", true, false) != null) == auth.apple_available(), "Apple visibility mismatch")
-	var kakao: Button = login.find_child("KakaoLogin", true, false)
-	kakao.grab_focus()
-	kakao.pressed.emit()
+	var naver: Button = login.find_child("NaverLogin", true, false)
+	naver.grab_focus()
+	# Exercise the common preparation modal without starting a real provider login.
+	login._on_sign_in_unavailable("네이버")
 	await process_frame
 	check(login.dialog.visible, "Unconfigured sign-in must display notice")
-	check(login.dialog.dialog_text.contains("카카오"), "Provider notice mismatch")
+	check(login.dialog.dialog_text.contains("네이버"), "Provider notice mismatch")
 	check(login.dialog.confirm_button.has_focus(), "Modal must own keyboard focus")
 	login.dialog.confirm_button.pressed.emit()
 	check(not login.dialog.visible, "Modal confirmation must close the notice")
-	check(kakao.has_focus(), "Closing modal must return focus to the provider")
+	check(naver.has_focus(), "Closing modal must return focus to the provider")
 	for provider: String in ["naver", "apple"]:
 		if provider == "apple" and not auth.apple_available():
 			continue
-		auth.request_sign_in(provider)
+		if provider == "naver": login._on_sign_in_unavailable("네이버")
+		else: auth.request_sign_in(provider)
 		check(login.dialog.visible and login.dialog.dialog_text.contains(auth.PROVIDER_NAMES[provider]), "Reused modal must show the selected provider")
 		var cancel := InputEventAction.new()
 		cancel.action = "ui_cancel"

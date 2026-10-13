@@ -1,0 +1,48 @@
+name: DothanjanKakao
+options:
+  deploymentTarget:
+    iOS: '15.0'
+packages:
+  KakaoSDK:
+    url: https://github.com/kakao/kakao-ios-sdk
+    exactVersion: '2.29.0'
+  NaverSDK:
+    url: https://github.com/naver/naveridlogin-sdk-ios-swift
+    exactVersion: '5.2.1'
+targets:
+  DothanjanKakao:
+    type: framework
+    platform: iOS
+    sources:
+      - path: KakaoSDKBridge.swift
+      - path: KakaoLoginBridge.mm
+      - path: NaverSDKBridge.swift
+      - path: NaverLoginBridge.mm
+      - path: SessionStoreBridge.mm
+    dependencies:
+      - package: KakaoSDK
+        product: KakaoSDKCommon
+      - package: KakaoSDK
+        product: KakaoSDKAuth
+      - package: KakaoSDK
+        product: KakaoSDKUser
+      - package: NaverSDK
+        product: NidThirdPartyLogin
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.dothanjan.kakao.bridge
+        MACH_O_TYPE: staticlib
+        SWIFT_VERSION: '5.0'
+        CLANG_CXX_LANGUAGE_STANDARD: c++17
+        CLANG_ENABLE_OBJC_ARC: YES
+        HEADER_SEARCH_PATHS: '$(inherited) $(GODOT_SOURCE_ROOT)'
+        GCC_PREPROCESSOR_DEFINITIONS: '$(inherited) PTRCALL_ENABLED TYPED_METHOD_BIND DISABLE_FORCED_INLINE IOS_ENABLED'
+        OTHER_CPLUSPLUSFLAGS: '$(inherited) -fcxx-modules -fmodules'
+        DEFINES_MODULE: YES
+        BUILD_LIBRARY_FOR_DISTRIBUTION: YES
+        SKIP_INSTALL: NO
+        GENERATE_INFOPLIST_FILE: YES
+        CODE_SIGNING_ALLOWED: NO
+      configs:
+        Debug:
+          GCC_PREPROCESSOR_DEFINITIONS: '$(inherited) DEBUG_ENABLED DEBUG_MEMORY_ALLOC'

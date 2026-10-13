@@ -1,0 +1,7 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <meta-data android:name="org.godotengine.plugin.v2.KakaoLogin" android:value="org.dothanjan.kakao.KakaoLoginPlugin" />
+        <meta-data android:name="org.godotengine.plugin.v2.NaverLogin" android:value="org.dothanjan.naver.NaverLoginPlugin" />
+        <meta-data android:name="org.godotengine.plugin.v2.SessionStore" android:value="org.dothanjan.session.SessionStorePlugin" />
+    </application>
+</manifest>

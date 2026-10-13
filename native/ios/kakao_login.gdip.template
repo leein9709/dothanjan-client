@@ -1,0 +1,17 @@
+[config]
+name="KakaoLogin"
+binary="DothanjanKakao.xcframework"
+initialization="init_dothanjan_kakao"
+deinitialization="deinit_dothanjan_kakao"
+
+[dependencies]
+linked=[]
+embedded=[]
+system=["UIKit.framework", "AuthenticationServices.framework", "Security.framework"]
+capabilities=[]
+files=[]
+linker_flags=["-ObjC"]
+
+[plist]
+LSApplicationQueriesSchemes:raw="<array><string>kakaokompassauth</string><string>kakaolink</string><string>kakaoplus</string><string>naversearchapp</string><string>naversearchthirdlogin</string></array>"
+CFBundleURLTypes:raw="<array><dict><key>CFBundleURLSchemes</key><array><string>kakao__NATIVE_APP_KEY__</string><string>__NAVER_URL_SCHEME__</string></array></dict></array>"

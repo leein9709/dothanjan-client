@@ -1,0 +1,4 @@
+-keep class org.dothanjan.kakao.KakaoLoginPlugin { *; }
+-keep class com.kakao.sdk.**.model.* { <fields>; }
+-keep class org.dothanjan.naver.NaverLoginPlugin { *; }
+-keep class org.dothanjan.session.SessionStorePlugin { *; }
