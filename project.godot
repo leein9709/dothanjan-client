@@ -14,7 +14,10 @@ boot_splash/use_filter=false
 
 [autoload]
 AppConfig="*res://scripts/app_config.gd"
+BackgroundMusic="*res://scripts/background_music.gd"
 SocialAuth="*res://scripts/social_auth.gd"
+EntryTransition="*res://scripts/entry_transition.gd"
+BookTransition="*res://scripts/book_transition.gd"
 
 [display]
 window/size/viewport_width=1280

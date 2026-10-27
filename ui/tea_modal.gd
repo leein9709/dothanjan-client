@@ -3,6 +3,7 @@ extends CanvasLayer
 
 signal confirmed
 signal dismissed
+signal cancelled
 
 const PANEL_STYLE: StyleBoxFlat = preload("res://ui/styles/tea_panel.tres")
 const FONT: Font = preload("res://assets/fonts/Dongle-Regular.ttf")
@@ -27,6 +28,7 @@ var panel: PanelContainer
 var title_label: Label
 var message_label: Label
 var confirm_button: Button
+var cancel_button: Button
 var _previous_focus: WeakRef
 
 func _ready() -> void:
@@ -60,6 +62,7 @@ func _ready() -> void:
 	column.add_child(message_label)
 	var actions := HBoxContainer.new()
 	actions.alignment = BoxContainer.ALIGNMENT_CENTER
+	actions.add_theme_constant_override("separation", 18)
 	column.add_child(actions)
 	confirm_button = Button.new()
 	confirm_button.name = "ConfirmButton"
@@ -85,6 +88,13 @@ func _ready() -> void:
 	focus_style.set_expand_margin_all(4)
 	confirm_button.add_theme_stylebox_override("focus", focus_style)
 	actions.add_child(confirm_button)
+	cancel_button = confirm_button.duplicate() as Button
+	cancel_button.name = "CancelButton"
+	cancel_button.text = "다시 볼게요"
+	cancel_button.hide()
+	actions.add_child(cancel_button)
+	actions.move_child(cancel_button, 0)
+	cancel_button.pressed.connect(_cancel)
 	# Keep keyboard navigation inside the modal until it closes.
 	confirm_button.focus_next = NodePath(".")
 	confirm_button.focus_previous = NodePath(".")
@@ -106,6 +116,12 @@ func _label(text: String, font_size: int, color: Color) -> Label:
 func popup_centered() -> void:
 	if visible:
 		return
+	if not cancel_button.visible:
+		confirm_button.custom_minimum_size = Vector2(176, 56)
+		confirm_button.focus_next = NodePath(".")
+		confirm_button.focus_previous = NodePath(".")
+		for side: int in [SIDE_LEFT, SIDE_TOP, SIDE_RIGHT, SIDE_BOTTOM]:
+			confirm_button.set_focus_neighbor(side, NodePath("."))
 	var focused := get_viewport().gui_get_focus_owner()
 	_previous_focus = weakref(focused) if focused != null else null
 	show()
@@ -118,8 +134,30 @@ func show_preparation(description: String) -> void:
 	popup_centered()
 
 func _confirm() -> void:
+	cancel_button.hide()
 	hide()
 	confirmed.emit()
+
+func show_confirmation(heading: String, message: String) -> void:
+	title = heading
+	dialog_text = message
+	ok_button_text = "확인"
+	confirm_button.custom_minimum_size = Vector2(156, 56)
+	cancel_button.custom_minimum_size = Vector2(156, 56)
+	cancel_button.show()
+	confirm_button.focus_next = confirm_button.get_path_to(cancel_button)
+	confirm_button.focus_previous = confirm_button.get_path_to(cancel_button)
+	cancel_button.focus_next = cancel_button.get_path_to(confirm_button)
+	cancel_button.focus_previous = cancel_button.get_path_to(confirm_button)
+	for side: int in [SIDE_LEFT, SIDE_TOP, SIDE_RIGHT, SIDE_BOTTOM]:
+		confirm_button.set_focus_neighbor(side, confirm_button.get_path_to(cancel_button))
+		cancel_button.set_focus_neighbor(side, cancel_button.get_path_to(confirm_button))
+	popup_centered()
+
+func _cancel() -> void:
+	cancel_button.hide()
+	hide()
+	cancelled.emit()
 
 func _on_visibility_changed() -> void:
 	set_process_unhandled_input(visible)
@@ -133,6 +171,6 @@ func _on_visibility_changed() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
-		hide()
+		_cancel()
 	# The open modal owns input; gameplay must not react behind it.
 	get_viewport().set_input_as_handled()

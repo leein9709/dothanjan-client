@@ -180,11 +180,19 @@ func _run() -> void:
 	check(not JSON.parse_string(store.saved).has("accessToken"), "PC accessToken must remain memory-only")
 	mobile_auth.queue_free()
 	desktop_auth.queue_free()
-	# The current account has no saved owner/name; entry must open the review-only book.
+	# The current account has no saved owner/name; entry must open the owner book.
 	login.entry_button.pressed.emit()
-	for frame: int in range(600):
+	var transition: Node = root.get_node("EntryTransition")
+	check(transition.busy, "Entry starts the shared leaf transition")
+	check(not login.motto.visible and not login.version.visible and not login.entry_button.visible and not login.logout_button.visible, "Entry hides all text and controls immediately")
+	check(current_scene == login, "The login village remains until leaves cover the viewport")
+	login.entry_button.pressed.emit()
+	check(transition.busy, "Duplicate entry stays in the same transition")
+	var entry_deadline: int = Time.get_ticks_msec() + 15000
+	while Time.get_ticks_msec() < entry_deadline:
 		await process_frame
-		if current_scene != null and current_scene.scene_file_path == "res://scenes/owner_setup.tscn": break
+		if not transition.busy: break
+	check(not transition.busy and not transition.surface.visible, "Leaves reveal the prepared scene and release input")
 	check(current_scene != null and current_scene.scene_file_path == "res://scenes/owner_setup.tscn", "A verified account without owner/name must enter the owner book")
 	if current_scene != null and current_scene.scene_file_path == "res://scenes/owner_setup.tscn":
 		var book: Control = current_scene
@@ -192,13 +200,51 @@ func _run() -> void:
 		book._select_owner(3)
 		book.name_input.text = "저장하지 않는 찻집"
 		book.start_button.pressed.emit()
-		check(current_scene == book and book.selected_owner_id == "cat-black", "Start must not save or navigate")
-		book.back_button.pressed.emit()
+		check(current_scene == book and book.selected_owner_id == "cat-black", "An unchecked name must not start the transition")
+		book.name_input.text = "연출확인찻집"
+		book._on_cafe_name_changed(book.name_input.text)
+		await book._check_cafe_name()
+		check(not book.start_button.disabled, "An available current name enables Start")
+		var paper: Node = root.get_node("BookTransition")
+		book.start_button.pressed.emit()
+		check(book.dialog.visible and not paper.busy, "Start asks for confirmation before saving or moving")
+		check(book.dialog.dialog_text.contains("까망") and book.dialog.dialog_text.contains("연출확인찻집"), "Confirmation shows the chosen owner and exact cafe name")
+		book.dialog.cancel_button.pressed.emit()
+		var unsaved: Dictionary = await auth.fetch_player_profile()
+		check(unsaved.player.get("owner_character_id") == null, "Cancel never saves a choice")
+		book.start_button.pressed.emit()
+		book.dialog.confirm_button.pressed.emit()
+		var save_deadline: int = Time.get_ticks_msec() + 10000
+		while not paper.busy and Time.get_ticks_msec() < save_deadline:
+			await process_frame
+		check(paper.busy and current_scene == book, "Confirmed save starts the closing book")
+		for control: Control in book.setup_ui:
+			check(not control.visible, "Book controls hide as the page begins")
+		check(not book.visible, "Only the moving book is drawn, without a stationary duplicate")
+		book.start_button.pressed.emit()
+		check(paper.busy and current_scene == book, "Duplicate Start cannot replace the active transition")
+		var paper_deadline: int = Time.get_ticks_msec() + 10000
+		while Time.get_ticks_msec() < paper_deadline:
+			await process_frame
+			if not paper.busy: break
+		check(not paper.busy and not paper.surface.visible, "The closed book drops away and releases input")
+		check(current_scene != null and current_scene.scene_file_path == "res://scenes/game.tscn", "The paper reveals the starter cafe")
+		if current_scene != null and current_scene.scene_file_path == "res://scenes/game.tscn":
+			check(current_scene.room_ready and current_scene.cafe_profile.owner_character_id == "cat-black" and current_scene.cafe_profile.cafe_name == "연출확인찻집", "Cafe receives the selected original and name")
+			var profile_result: Dictionary = await auth.fetch_player_profile()
+			check(profile_result.player.get("cafe_name") == "연출확인찻집" and profile_result.player.get("owner_character_id") == "cat-black", "Final choices are persisted for this account")
+			check(not current_scene.has_method("_return_to_book"), "Cafe has no path back to owner selection")
+		# Test-only restart of the entry scene; this is not an in-game navigation button.
+		change_scene_to_file(auth.LOGIN_SCENE)
 		await process_frame
 		await process_frame
 		login = current_scene
-		check(login != null and login.scene_file_path == auth.LOGIN_SCENE and login.entry_button.visible, "Back must return to the authenticated entry gate")
-		check(auth.has_valid_session(), "Back must preserve the authenticated session")
+		login.entry_button.pressed.emit()
+		var return_deadline: int = Time.get_ticks_msec() + 15000
+		while transition.busy and Time.get_ticks_msec() < return_deadline:
+			await process_frame
+		check(current_scene.scene_file_path == "res://scenes/game.tscn", "Returning saved account skips the book and enters the cafe")
+		login = current_scene
 
 	# A disposable scene verifies logout returning from a future game screen.
 	root.remove_child(login)

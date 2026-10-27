@@ -13,11 +13,11 @@ const APPLE_ICON: Texture2D = preload("res://assets/ui/social/apple.svg")
 const PANEL_STYLE: StyleBoxFlat = preload("res://ui/styles/tea_panel.tres")
 const MODAL: Script = preload("res://ui/tea_modal.gd")
 const LOGIN_SUBTITLE_FONT_SIZE: int = 29
-const OWNER_SETUP_SCENE: String = "res://scenes/owner_setup.tscn"
 const SCENE_TEXT_COLOR: Color = Color("fff3d8")
 const SCENE_TEXT_SHADOW: Color = Color(0.05, 0.09, 0.04, 0.85)
 var login_panel: PanelContainer
 var motto: Label
+var version: Label
 var dialog: TeaModal
 var last_login_hint: HBoxContainer
 var last_login_badge: PanelContainer
@@ -58,7 +58,7 @@ func _ready() -> void:
 	motto = _label("아무 일 없는 오후도\n꽤 근사하잖아요.", 54, SCENE_TEXT_COLOR)
 	_add_scene_text_shadow(motto)
 	add_child(motto)
-	var version := _label("도트한잔  ·  0.1.0", 24, Color(1, 0.96, 0.84, 0.8))
+	version = _label("도트한잔  ·  0.1.0", 24, Color(1, 0.96, 0.84, 0.8))
 	version.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
 	version.position = Vector2(32, -37)
 	add_child(version)
@@ -247,8 +247,8 @@ func _on_logout_pressed() -> void:
 
 func _on_session_changed(authenticated: bool) -> void:
 	_authenticated = authenticated
-	login_panel.visible = not authenticated and not SocialAuth.startup_check_pending
-	entry_button.visible = authenticated and not SocialAuth.startup_check_pending
+	login_panel.visible = not authenticated and not SocialAuth.startup_check_pending and not _entry_loading
+	entry_button.visible = authenticated and not SocialAuth.startup_check_pending and not _entry_loading
 	logout_button.visible = entry_button.visible
 	entry_button.disabled = SocialAuth.busy or _entry_loading
 	logout_button.disabled = SocialAuth.busy or _entry_loading
@@ -261,44 +261,36 @@ func _on_startup_check_changed(_checking: bool) -> void:
 	_on_session_changed(SocialAuth.has_valid_session())
 
 func _on_entry_pressed() -> void:
-	if dialog.visible or SocialAuth.busy or _entry_loading or SocialAuth.startup_check_pending: return
+	if dialog.visible or SocialAuth.busy or _entry_loading or EntryTransition.busy or SocialAuth.startup_check_pending: return
 	if not SocialAuth.has_valid_session():
 		_on_session_changed(false)
 		return
 	_entry_loading = true
+	login_panel.hide()
+	entry_button.hide()
+	logout_button.hide()
+	motto.hide()
+	version.hide()
+	entry_button.release_focus()
 	_on_login_busy(SocialAuth.busy)
 	entry_requested.emit()
-	var result: Dictionary = await SocialAuth.fetch_player_profile()
-	if not is_inside_tree(): return
-	_entry_loading = false
-	_on_login_busy(SocialAuth.busy)
-	if result.has("error"):
-		if result.error in ["session_expired", "session_changed"]: return
-		dialog.title = "찻집을 확인하지 못했어요"
-		dialog.dialog_text = "연결이 잠시 쉬고 있어요.\n조금 뒤에 다시 들어가 볼까요?"
-		dialog.ok_button_text = "다시 해볼게요"
-		dialog.popup_centered()
-		return
-	var profile: Dictionary = result.player
-	var owner: Variant = profile.get("owner_character_id")
-	var cafe: Variant = profile.get("cafe_name")
-	var has_owner: bool = owner is String and not owner.strip_edges().is_empty()
-	var has_name: bool = cafe is String and not cafe.strip_edges().is_empty()
-	if not has_owner or not has_name:
-		_open_owner_setup()
-	# An already configured account remains at the gate until its game scene is requested.
+	# The autoload owns the request, covered scene swap and reveal after this node is freed.
+	EntryTransition.enter(self)
 
-func _open_owner_setup() -> void:
-	var scene: PackedScene = load(OWNER_SETUP_SCENE)
-	if scene != null:
-		var preview: Node = scene.instantiate()
-		var attached: Script = preview.get_script()
-		var ready_to_open: bool = attached != null and attached.can_instantiate()
-		preview.free()
-		if ready_to_open and get_tree().change_scene_to_packed(scene) == OK: return
-	# Preserve the authenticated entry gate if a scene resource cannot load.
-	dialog.title = "책을 펼치지 못했어요"
-	dialog.dialog_text = "사장님 도감을 다시 꺼내 볼게요.\n한 번 더 들어가 볼까요?"
+func _restore_entry_ui() -> void:
+	_entry_loading = false
+	version.show()
+	_on_session_changed(SocialAuth.has_valid_session())
+	_on_login_busy(SocialAuth.busy)
+	_layout()
+
+func _show_entry_error(code: String) -> void:
+	if code in ["session_expired", "session_changed"]: return
+	if code == "game_not_ready":
+		dialog.show_preparation("사장님의 찻집을 준비하고 있어요.")
+		return
+	dialog.title = "책을 펼치지 못했어요" if code == "scene_unavailable" else "찻집을 확인하지 못했어요"
+	dialog.dialog_text = "잠깐 바람을 고르고 있어요.\n한 번 더 들어가 볼까요?"
 	dialog.ok_button_text = "다시 해볼게요"
 	dialog.popup_centered()
 
@@ -370,7 +362,7 @@ func _layout() -> void:
 			safe_bottom = maxf(safe_bottom, float(window.y - safe.end.y) * size.y / float(window.y))
 	login_panel.position = Vector2(size.x - panel_size.x - maxf(safe_right, size.x * 0.07), (size.y - panel_size.y) * 0.5)
 	motto.position = Vector2(maxf(safe_left, size.x * 0.065), size.y * 0.69)
-	motto.visible = size.x > 980
+	motto.visible = size.x > 980 and not _entry_loading
 	entry_prompt.offset_left = 32.0
 	entry_prompt.offset_right = -32.0
 	entry_prompt.offset_top = -safe_bottom - entry_prompt.get_combined_minimum_size().y

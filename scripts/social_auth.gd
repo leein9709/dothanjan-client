@@ -106,6 +106,41 @@ func _publish_session_state() -> void:
 	_published_authenticated = authenticated
 	session_changed.emit(authenticated)
 
+func check_cafe_name(value: String) -> Dictionary:
+	if not has_valid_session(): return {"error": "session_expired"}
+	var generation: int = _generation
+	var account: String = player_id
+	var response: Dictionary = await _request("/v1/auth/cafe-name/check", {"cafe_name": value}, PackedStringArray(["Authorization: Bearer " + _accessToken]))
+	if generation != _generation or account != player_id or not has_valid_session():
+		return {"error": "session_changed"}
+	if response.status == 401:
+		_clear_memory()
+		_refresh_session()
+		return {"error": "session_expired"}
+	var data: Dictionary = response.data
+	if response.status == 200 and data.get("available") is bool and data.get("cafe_name") is String:
+		return {"available": data.available, "cafe_name": data.cafe_name}
+	if response.status == 400:
+		return {"error": "invalid_cafe_name", "reason": str(data.get("reason", ""))}
+	if response.status == 429: return {"error": "too_many_attempts"}
+	if response.status == 404: return {"error": "server_update_required"}
+	return {"error": "server_unavailable"}
+
+func setup_cafe(owner: String, cafe_name: String) -> Dictionary:
+	if not has_valid_session(): return {"error": "session_expired"}
+	var generation: int = _generation
+	var account: String = player_id
+	var response: Dictionary = await _request("/v1/auth/cafe/setup", {"owner_character_id": owner, "cafe_name": cafe_name}, PackedStringArray(["Authorization: Bearer " + _accessToken]))
+	if generation != _generation or account != player_id or not has_valid_session(): return {"error": "session_changed"}
+	if response.status == 401:
+		_clear_memory()
+		_refresh_session()
+		return {"error": "session_expired"}
+	var profile: Variant = response.data.get("player")
+	if response.status == 200 and profile is Dictionary and str(profile.get("id", "")) == account and str(profile.get("owner_character_id", "")) == owner and str(profile.get("cafe_name", "")) == cafe_name:
+		return {"player": profile}
+	return {"error": str(response.data.get("error", "server_unavailable"))}
+
 func get_last_login_provider() -> String:
 	return _last_login_provider
 
